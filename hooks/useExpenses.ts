@@ -60,9 +60,27 @@ const fetchExpenseById = async (id: string) => {
   return response;
 };
 
-const createExpense = async (expenseData: CreateExpenseDto) => {
+const createExpense = async (expenseData: Omit<CreateExpenseDto, 'userId'>) => {
   const user = await getCurrentUser();
   if (!user) throw new Error("Authentication required");
+
+  // Check for existing expense with the same name
+  const existingExpenses = await fetchAllExpenses();
+  if (existingExpenses.success && existingExpenses.data) {
+    const duplicateExpense = existingExpenses.data.find(
+      expense => expense.name.toLowerCase() === expenseData.name.toLowerCase() &&
+                 expense.userId === user.id
+    );
+
+    if (duplicateExpense) {
+      Toast.show({
+        type: "error",
+        text1: "Duplicate Expense",
+        text2: "An expense with this name already exists",
+      });
+      throw new Error("Duplicate expense name");
+    }
+  }
 
   return handleApiRequest<Expense>(() => 
     api.post("/expenses", { 
@@ -86,6 +104,27 @@ const updateExpense = async (id: string, expenseData: UpdateExpenseDto) => {
       text2: "You don't have permission to edit this expense",
     });
     throw new Error("Unauthorized to update this expense");
+  }
+
+  // Check for existing expense with the same name (excluding current expense)
+  if (expenseData.name) {
+    const existingExpenses = await fetchAllExpenses();
+    if (existingExpenses.success && existingExpenses.data) {
+      const duplicateExpense = existingExpenses.data.find(
+        expense => expense.name.toLowerCase() === expenseData.name.toLowerCase() &&
+                   expense.userId === user.id &&
+                   expense.id !== id
+      );
+
+      if (duplicateExpense) {
+        Toast.show({
+          type: "error",
+          text1: "Duplicate Expense",
+          text2: "An expense with this name already exists",
+        });
+        throw new Error("Duplicate expense name");
+      }
+    }
   }
 
   return handleApiRequest<Expense>(() => 
@@ -170,7 +209,9 @@ export const useDeleteExpense = () => {
 export const formatAmount = (amount: string): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'RWF',
+    minimumFractionDigits: 0, // RWF doesn't use decimal places
+    maximumFractionDigits: 0
   }).format(Number(amount));
 };
 

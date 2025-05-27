@@ -67,7 +67,7 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          <View className="space-y-4">
+          <View className="flex gap-4">
             {/* Username Field */}
             <View>
               <Text className="text-white font-semibold mb-2">Username</Text>

@@ -49,7 +49,7 @@ const TabsLayout = () => {
           position: "absolute",
           borderTopColor: "#667eea1A",
           borderTopWidth: 1,
-          height: 85,
+          minHeight: 85,
           paddingTop: 8,
           paddingBottom: 50,
           bottom: 0,
