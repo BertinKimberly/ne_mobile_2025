@@ -11,8 +11,7 @@ import { z } from "zod";
 // Zod validation schema
 const signupSchema = z.object({
   username: z.string()
-    .min(1, "Username is required")
-    .email("Please enter a valid email"),
+    .min(1, "Username is required"),
   password: z.string()
     .min(1, "Password is required")
     .min(6, "Password must be at least 6 characters"),

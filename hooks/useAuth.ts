@@ -17,8 +17,13 @@ const login = async (credentials: { username: string; password: string }) => {
   const response = await handleApiRequest<User[]>(() =>
     api.get(`/users?username=${credentials.username}`)
   );
+  console.log("Azampoza amarira:", response);
   
-  if (!response.success || !response.data || response.data.length === 0) {
+  if (!response.success) {
+    throw new Error("User not found");
+  }
+
+  if (!response.data || response.data.length === 0) {
     throw new Error("Invalid username or password");
   }
 
@@ -162,13 +167,6 @@ export const useUser = () => {
         });
         return null;
       }
-    },
-    onError: (error: Error) => {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error.message || "Failed to fetch user data",
-      });
-    },
+    }
   });
 };

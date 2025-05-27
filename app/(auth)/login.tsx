@@ -161,10 +161,6 @@ export default function LoginScreen() {
               </Link>
             </View>
           </View>
-
-          <Text className="text-white/60 text-center text-sm mt-8">
-            Use your registered username and password to sign in
-          </Text>
         </LinearGradient>
       </ScrollView>
     </KeyboardAvoidingView>

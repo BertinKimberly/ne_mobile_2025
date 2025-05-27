@@ -9,16 +9,29 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateExpense, useGetExpense, useUpdateExpense } from '@/hooks/useExpenses';
 
+// Predefined categories
+const EXPENSE_CATEGORIES = [
+  'Food',
+  'Transport',
+  'Entertainment',
+  'Shopping',
+  'Bills',
+  'Healthcare',
+  'Education',
+  'Other'
+];
+
 interface FormData {
   name: string;
   amount: string;
   description: string;
+  category: string;
 }
 
 export default function AddExpenseScreen() {
@@ -30,6 +43,7 @@ export default function AddExpenseScreen() {
     name: '',
     amount: '',
     description: '',
+    category: 'Other', // Default category
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -39,16 +53,17 @@ export default function AddExpenseScreen() {
   const { data: expenseData, isLoading: isLoadingExpense } = useGetExpense(id as string);
 
   // Load expense data if in edit mode
-  useState(() => {
+  useEffect(() => {
     if (isEditMode && expenseData?.data) {
       const expense = expenseData.data;
       setFormData({
-        name: expense.name,
-        amount: expense.amount,
-        description: expense.description,
+        name: expense.name || '',
+        amount: expense.amount || '',
+        description: expense.description || '',
+        category: expense.category || 'Other',
       });
     }
-  });
+  }, [isEditMode, expenseData?.data]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
@@ -67,6 +82,10 @@ export default function AddExpenseScreen() {
       newErrors.description = 'Description is required';
     }
 
+    if (!formData.category) {
+      newErrors.category = 'Category is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -80,6 +99,7 @@ export default function AddExpenseScreen() {
       name: formData.name.trim(),
       amount: formData.amount,
       description: formData.description.trim(),
+      category: formData.category,
     };
 
     if (isEditMode) {
@@ -212,24 +232,66 @@ export default function AddExpenseScreen() {
             )}
           </View>
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            onPress={handleSubmit}
-            disabled={isCreating || isUpdating}
-            className={`bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl items-center mb-8 ${
-              (isCreating || isUpdating) ? 'opacity-70' : ''
-            }`}
-          >
-            {isCreating || isUpdating ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-white font-semibold text-lg">
-                {isEditMode ? 'Update Expense' : 'Add Expense'}
-              </Text>
+          {/* Category Selection */}
+          <View className="mb-6">
+            <Text className="text-gray-700 font-semibold mb-2">Category</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex-row"
+            >
+              {EXPENSE_CATEGORIES.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => {
+                    setFormData(prev => ({ ...prev, category }));
+                    if (errors.category) {
+                      setErrors(prev => ({ ...prev, category: undefined }));
+                    }
+                  }}
+                  className={`mr-2 px-4 py-2 rounded-full ${
+                    formData.category === category
+                      ? 'bg-blue-500'
+                      : 'bg-gray-200'
+                  }`}
+                >
+                  <Text
+                    className={`${
+                      formData.category === category
+                        ? 'text-white'
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {errors.category && (
+              <Text className="text-red-500 text-sm mt-1">{errors.category}</Text>
             )}
-          </TouchableOpacity>
+          </View>
+
+          {/* Submit Button */}
+          <View className="bg-white p-4 rounded-xl shadow-sm mb-8">
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={isCreating || isUpdating}
+              className={`bg-blue-500 p-4 rounded-xl items-center ${
+                (isCreating || isUpdating) ? 'opacity-70' : ''
+              }`}
+            >
+              {isCreating || isUpdating ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-semibold text-lg">
+                  {isEditMode ? 'Update Expense' : 'Add Expense'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
-} 
+}

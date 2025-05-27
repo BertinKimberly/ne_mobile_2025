@@ -54,13 +54,14 @@ export default function ExpenseDetailScreen() {
 
   const handleShare = async () => {
     if (!expenseResponse?.data) return;
+    const expense = expenseResponse.data;
 
     try {
       await Share.share({
-        message: `Expense: ${expenseResponse.data.description}\nAmount: ${formatAmount(
-          expenseResponse.data.amount
-        )}\nCategory: ${expenseResponse.data.category}\nDate: ${formatDate(
-          expenseResponse.data.date
+        message: `Expense: ${expense.description || expense.name}\nAmount: ${formatAmount(
+          expense.amount
+        )}\nCategory: ${expense.category || 'Other'}\nDate: ${formatDate(
+          expense.date || expense.createdAt
         )}`,
       });
     } catch (error) {
@@ -92,7 +93,7 @@ export default function ExpenseDetailScreen() {
     );
   }
 
-  if (isErrorExpense || !expenseResponse?.success) {
+  if (isErrorExpense || !expenseResponse?.success || !expenseResponse?.data) {
     return (
       <View className="flex-1 items-center justify-center bg-gray-50 px-6">
         <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
@@ -135,7 +136,7 @@ export default function ExpenseDetailScreen() {
               <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
             <Text className="text-white font-semibold text-lg flex-1 text-center mr-10" numberOfLines={1}>
-              {expense.description}
+              {expense.description || expense.name}
             </Text>
           </View>
         </LinearGradient>
@@ -226,9 +227,16 @@ export default function ExpenseDetailScreen() {
 
             <View className="p-4 space-y-4">
               <View>
+                <Text className="text-gray-500 text-sm mb-1">Name</Text>
+                <Text className="text-gray-900 font-semibold">
+                  {expense.name}
+                </Text>
+              </View>
+
+              <View>
                 <Text className="text-gray-500 text-sm mb-1">Description</Text>
                 <Text className="text-gray-900 font-semibold">
-                  {expense.description}
+                  {expense.description || '-'}
                 </Text>
               </View>
 
@@ -237,7 +245,7 @@ export default function ExpenseDetailScreen() {
                 <View className="flex-row items-center">
                   <View className="bg-blue-100 px-3 py-1 rounded-full">
                     <Text className="text-blue-600 font-semibold">
-                      {expense.category}
+                      {expense.category || 'Other'}
                     </Text>
                   </View>
                 </View>
@@ -246,7 +254,7 @@ export default function ExpenseDetailScreen() {
               <View>
                 <Text className="text-gray-500 text-sm mb-1">Date</Text>
                 <Text className="text-gray-900 font-semibold">
-                  {formatDate(expense.date)}
+                  {formatDate(expense.date || expense.createdAt)}
                 </Text>
               </View>
 
@@ -262,4 +270,4 @@ export default function ExpenseDetailScreen() {
       </ScrollView>
     </View>
   );
-} 
+}

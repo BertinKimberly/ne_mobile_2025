@@ -11,6 +11,11 @@ export interface Expense {
   amount: string;
   description: string;
   createdAt: string;
+  category?: string;
+  title?: string;
+  date?: string;
+  paymentMethod?: string;
+  userId: string; // Make userId required
 }
 
 export type CreateExpenseDto = Omit<Expense, 'id' | 'createdAt'>;

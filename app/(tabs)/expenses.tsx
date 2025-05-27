@@ -5,32 +5,57 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  RefreshControl
+  RefreshControl,
+  TextInput
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useGetAllExpenses, useDeleteExpense, formatAmount, formatDate } from '@/hooks/useExpenses';
 
-const CATEGORIES = [
-  'All',
-  'Food',
-  'Transportation',
-  'Housing',
-  'Utilities',
-  'Entertainment',
-  'Healthcare',
-  'Shopping',
-  'Other',
-];
-
 export default function ExpensesScreen() {
   const router = useRouter();
   const { data: expensesResponse, isLoading, refetch } = useGetAllExpenses();
   const { mutate: deleteExpense, isPending: isDeleting } = useDeleteExpense();
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const expenses = expensesResponse?.data || [];
+
+  // Calculate unique categories from expenses data
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set(expenses
+      .map(expense => expense.category || 'Other')
+      .filter(Boolean));
+    return ['All', ...Array.from(uniqueCategories)];
+  }, [expenses]);
+
+  // Filter expenses based on selected category and search query
+  const filteredExpenses = useMemo(() => {
+    let filtered = expenses;
+    
+    // Apply category filter
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(expense => 
+        (expense.category || 'Other') === selectedCategory
+      );
+    }
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(expense => 
+        expense.name?.toLowerCase().includes(query) ||
+        expense.description?.toLowerCase().includes(query) ||
+        (expense.category || 'Other').toLowerCase().includes(query) ||
+        formatAmount(expense.amount).toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [expenses, selectedCategory, searchQuery]);
 
   const handleAddExpense = () => {
     router.push('/add-expense');
@@ -73,16 +98,78 @@ export default function ExpensesScreen() {
           <View>
             <Text className="text-white text-2xl font-bold">Expenses</Text>
             <Text className="text-white/80">
-              {expenses.length} {expenses.length === 1 ? 'expense' : 'expenses'}
+              {filteredExpenses.length} {filteredExpenses.length === 1 ? 'expense' : 'expenses'}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={handleAddExpense}
-            className="bg-white/20 p-3 rounded-full"
-          >
-            <Ionicons name="add" size={24} color="white" />
-          </TouchableOpacity>
+          <View className="flex-row space-x-2">
+            <TouchableOpacity
+              onPress={() => setIsSearchVisible(!isSearchVisible)}
+              className="bg-white/20 p-3 rounded-full"
+            >
+              <Ionicons 
+                name={isSearchVisible ? "close" : "search"} 
+                size={24} 
+                color="white" 
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleAddExpense}
+              className="bg-white/20 p-3 rounded-full"
+            >
+              <Ionicons name="add" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {isSearchVisible && (
+          <View className="mb-4">
+            <View className="flex-row items-center bg-white rounded-xl px-4 py-2">
+              <Ionicons name="search" size={20} color="#667eea" />
+              <TextInput
+                className="flex-1 ml-2 text-gray-800"
+                placeholder="Search expenses..."
+                placeholderTextColor="#94a3b8"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+              {searchQuery ? (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
+        )}
+
+        {/* Categories ScrollView */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mb-4"
+        >
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}
+              className={`mr-2 px-4 py-2 rounded-full ${
+                selectedCategory === category
+                  ? 'bg-white'
+                  : 'bg-white/20'
+              }`}
+            >
+              <Text
+                className={`font-medium ${
+                  selectedCategory === category
+                    ? 'text-blue-600'
+                    : 'text-white'
+                }`}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </LinearGradient>
 
       {isLoading ? (
@@ -99,7 +186,7 @@ export default function ExpensesScreen() {
           contentContainerStyle={{ paddingBottom: 120 }}
         >
           <View className="p-4">
-            {expenses.length === 0 ? (
+            {filteredExpenses.length === 0 ? (
               <View className="bg-white rounded-2xl p-8 items-center">
                 <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-4">
                   <Ionicons name="receipt-outline" size={32} color="#667eea" />
@@ -108,7 +195,9 @@ export default function ExpensesScreen() {
                   No expenses found
                 </Text>
                 <Text className="text-gray-600 text-center mb-6">
-                  You haven't added any expenses yet
+                  {selectedCategory === 'All' 
+                    ? "You haven't added any expenses yet"
+                    : `No expenses found in ${selectedCategory} category`}
                 </Text>
                 <TouchableOpacity
                   onPress={handleAddExpense}
@@ -119,7 +208,7 @@ export default function ExpensesScreen() {
               </View>
             ) : (
               <View className="space-y-4">
-                {expenses.map((expense) => (
+                {filteredExpenses.map((expense) => (
                   <TouchableOpacity
                     key={expense.id}
                     onPress={() => handleExpensePress(expense.id)}
@@ -134,9 +223,16 @@ export default function ExpensesScreen() {
                           <Text className="text-gray-900 font-semibold">
                             {expense.name}
                           </Text>
-                          <Text className="text-gray-500 text-sm">
-                            {formatDate(expense.createdAt)}
-                          </Text>
+                          <View className="flex-row items-center mt-1">
+                            <View className="bg-blue-100 px-2 py-0.5 rounded-full mr-2">
+                              <Text className="text-blue-600 text-xs">
+                                {expense.category || 'Other'}
+                              </Text>
+                            </View>
+                            <Text className="text-gray-500 text-sm">
+                              {formatDate(expense.date || expense.createdAt)}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <View className="items-end">
@@ -176,4 +272,4 @@ export default function ExpensesScreen() {
       )}
     </View>
   );
-} 
+}
