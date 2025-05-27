@@ -7,9 +7,24 @@ import { GlobalProvider } from "@/providers/global-provider";
 import { useProtectedRoute } from "@/providers/auth-provider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+const theme = {
+  ...DefaultTheme,
+  dark: false,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#667eea",
+    background: "#f9fafb",
+    card: "#ffffff",
+    text: "#1f2937",
+    border: "#e5e7eb",
+    notification: "#ef4444",
+  },
+};
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -55,8 +70,15 @@ export default function RootLayout() {
   }
 
   return (
-    <GlobalProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </GlobalProvider>
+    <ThemeProvider value={theme}>
+      <GlobalProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+          }}
+        />
+      </GlobalProvider>
+    </ThemeProvider>
   );
 }

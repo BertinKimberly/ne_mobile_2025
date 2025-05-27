@@ -101,7 +101,7 @@ export default function ExpensesScreen() {
               {filteredExpenses.length} {filteredExpenses.length === 1 ? 'expense' : 'expenses'}
             </Text>
           </View>
-          <View className="flex-row space-x-2">
+          <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setIsSearchVisible(!isSearchVisible)}
               className="bg-white/20 p-3 rounded-full"
@@ -207,7 +207,7 @@ export default function ExpensesScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View className="space-y-4">
+              <View className="flex gap-4">
                 {filteredExpenses.map((expense) => (
                   <TouchableOpacity
                     key={expense.id}
@@ -244,7 +244,7 @@ export default function ExpensesScreen() {
                         </Text>
                       </View>
                     </View>
-                    <View className="flex-row justify-end space-x-2">
+                    <View className="flex-row justify-end gap-2">
                       <TouchableOpacity
                         onPress={() => router.push(`/add-expense?id=${expense.id}`)}
                         className="p-2"

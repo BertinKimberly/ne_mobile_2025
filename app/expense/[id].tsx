@@ -67,10 +67,8 @@ export default function ExpenseDetailScreen() {
     } catch (error) {
       console.log('Error sharing:', error);
     }
-  };
-
-  const handleEdit = () => {
-    router.push(`/add-expense?id=${id}`);
+  };  const handleEdit = () => {
+    router.push(`/edit-expense?id=${id}`);
   };
 
   const handleBack = () => {
@@ -105,9 +103,9 @@ export default function ExpenseDetailScreen() {
         </Text>
         <TouchableOpacity
           onPress={handleBack}
-          className="bg-blue-500 px-6 py-3 rounded-xl"
+          className="bg-blue-500 px-8 py-3 rounded-2xl shadow-lg shadow-blue-500/30"
         >
-          <Text className="text-white font-semibold">Go Back</Text>
+          <Text className="text-white font-semibold text-lg">Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -131,7 +129,7 @@ export default function ExpenseDetailScreen() {
           <View className="flex-row items-center justify-between">
             <TouchableOpacity
               onPress={handleBack}
-              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
+              className="w-10 h-10 bg-white/20 backdrop-blur-lg rounded-xl items-center justify-center"
             >
               <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
@@ -160,21 +158,21 @@ export default function ExpenseDetailScreen() {
           <View className="flex-row items-center justify-between mb-6">
             <TouchableOpacity
               onPress={handleBack}
-              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
+              className="w-10 h-10 bg-white/20 backdrop-blur-lg rounded-xl items-center justify-center"
             >
               <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowActions(!showActions)}
-              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
+              className="w-10 h-10 bg-white/20 backdrop-blur-lg rounded-xl items-center justify-center"
             >
               <Ionicons name="ellipsis-horizontal" size={24} color="white" />
             </TouchableOpacity>
           </View>
 
-          <View className="bg-white/10 p-4 rounded-2xl">
+          <View className="bg-white/15 backdrop-blur-xl p-6 rounded-3xl shadow-lg">
             <Text className="text-white/80 text-sm mb-1">Amount</Text>
-            <Text className="text-white text-3xl font-bold">
+            <Text className="text-white text-4xl font-bold">
               {formatAmount(expense.amount)}
             </Text>
           </View>
@@ -183,35 +181,41 @@ export default function ExpenseDetailScreen() {
         {/* Action Buttons */}
         {showActions && (
           <View className="mx-4 -mt-4 mb-4">
-            <View className="bg-white rounded-2xl shadow-lg p-4">
+            <View className="bg-white rounded-3xl shadow-xl p-6">
               <View className="flex-row justify-around">
-                <TouchableOpacity onPress={handleEdit} className="items-center p-3">
-                  <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
-                    <Ionicons name="create-outline" size={24} color="#3b82f6" />
+                <TouchableOpacity 
+                  onPress={handleEdit} 
+                  className="items-center p-3 w-24"
+                >
+                  <View className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl items-center justify-center mb-3 shadow-lg shadow-blue-500/50">
+                    <Ionicons name="create-outline" size={28} color="white" />
                   </View>
-                  <Text className="text-blue-600 font-semibold text-sm">Edit</Text>
+                  <Text className="text-blue-700 font-bold text-sm">Edit</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleShare} className="items-center p-3">
-                  <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-2">
-                    <Ionicons name="share-outline" size={24} color="#10b981" />
+                <TouchableOpacity 
+                  onPress={handleShare} 
+                  className="items-center p-3 w-24"
+                >
+                  <View className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl items-center justify-center mb-3 shadow-lg shadow-green-500/50">
+                    <Ionicons name="share-outline" size={28} color="white" />
                   </View>
-                  <Text className="text-green-600 font-semibold text-sm">Share</Text>
+                  <Text className="text-green-700 font-bold text-sm">Share</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={handleDelete}
                   disabled={isDeleting}
-                  className="items-center p-3"
+                  className="items-center p-3 w-24"
                 >
-                  <View className="w-12 h-12 bg-red-100 rounded-full items-center justify-center mb-2">
+                  <View className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl items-center justify-center mb-3 shadow-lg shadow-red-500/50">
                     {isDeleting ? (
-                      <ActivityIndicator color="#ef4444" size="small" />
+                      <ActivityIndicator color="white" size="small" />
                     ) : (
-                      <Ionicons name="trash-outline" size={24} color="#ef4444" />
+                      <Ionicons name="trash-outline" size={28} color="white" />
                     )}
                   </View>
-                  <Text className="text-red-600 font-semibold text-sm">Delete</Text>
+                  <Text className="text-red-700 font-bold text-sm">Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -220,31 +224,31 @@ export default function ExpenseDetailScreen() {
 
         {/* Expense Details */}
         <View className="mx-4 mb-6">
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <View className="p-4 border-b border-gray-100">
-              <Text className="text-gray-600 font-semibold">Details</Text>
+          <View className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-sm overflow-hidden">
+            <View className="p-5 border-b border-gray-100">
+              <Text className="text-gray-700 font-semibold text-lg">Details</Text>
             </View>
 
-            <View className="p-4 space-y-4">
+            <View className="p-5 flex gap-6">
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Name</Text>
-                <Text className="text-gray-900 font-semibold">
+                <Text className="text-gray-500 text-sm mb-2">Name</Text>
+                <Text className="text-gray-900 font-semibold text-lg">
                   {expense.name}
                 </Text>
               </View>
 
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Description</Text>
-                <Text className="text-gray-900 font-semibold">
+                <Text className="text-gray-500 text-sm mb-2">Description</Text>
+                <Text className="text-gray-900 font-semibold text-lg">
                   {expense.description || '-'}
                 </Text>
               </View>
 
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Category</Text>
+                <Text className="text-gray-500 text-sm mb-2">Category</Text>
                 <View className="flex-row items-center">
-                  <View className="bg-blue-100 px-3 py-1 rounded-full">
-                    <Text className="text-blue-600 font-semibold">
+                  <View className="bg-blue-100 px-4 py-2 rounded-xl">
+                    <Text className="text-blue-600 font-semibold text-base">
                       {expense.category || 'Other'}
                     </Text>
                   </View>
@@ -252,19 +256,57 @@ export default function ExpenseDetailScreen() {
               </View>
 
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Date</Text>
-                <Text className="text-gray-900 font-semibold">
+                <Text className="text-gray-500 text-sm mb-2">Date</Text>
+                <Text className="text-gray-900 font-semibold text-lg">
                   {formatDate(expense.date || expense.createdAt)}
                 </Text>
               </View>
 
               <View>
-                <Text className="text-gray-500 text-sm mb-1">Created At</Text>
-                <Text className="text-gray-900 font-semibold">
+                <Text className="text-gray-500 text-sm mb-2">Created At</Text>
+                <Text className="text-gray-900 font-semibold text-lg">
                   {formatDate(expense.createdAt)}
                 </Text>
               </View>
             </View>
+          </View>
+
+          {/* Bottom Action Buttons */}
+          <View className="mt-8 gap-4 px-4 pb-8">
+            <TouchableOpacity
+              onPress={handleEdit}
+              className="bg-blue-400 p-4 rounded-2xl shadow-xl shadow-blue-500/40"
+            >
+              <View className="flex-row items-center justify-center">
+                <View className="bg-white/20 rounded-xl p-2 mr-3">
+                  <Ionicons name="create-outline" size={24} color="white" />
+                </View>
+                <Text className="text-white font-bold text-lg">
+                  Edit Expense
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-400 p-4 rounded-2xl shadow-xl shadow-red-500/40"
+            >
+              <View className="flex-row items-center justify-center">
+                {isDeleting ? (
+                  <ActivityIndicator color="white" size="large" />
+                ) : (
+                  <>
+                    <View className="bg-white/20 rounded-xl p-2 mr-3">
+                      <Ionicons name="trash-outline" size={24} color="white" />
+                    </View>
+                    <Text className="text-white font-bold text-lg">
+                      Delete Expense
+                    </Text>
+                  </>
+                )}
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

@@ -1,24 +1,14 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useCreateExpense } from '@/hooks/useExpenses';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useGetExpense, useUpdateExpense } from '@/hooks/useExpenses';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-// Predefined categories
+// Predefined categories - consider moving to a shared constants file
 const EXPENSE_CATEGORIES = [
   'Food',
   'Transport',
@@ -27,64 +17,81 @@ const EXPENSE_CATEGORIES = [
   'Bills',
   'Healthcare',
   'Education',
-  'Other',
+  'Other'
 ] as const;
 
 // Zod validation schema
-const addExpenseSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .min(3, 'Name must be at least 3 characters'),
-  amount: z
-    .string()
-    .min(1, 'Amount is required')
-    .refine(
-      (val) => !isNaN(Number(val)) && Number(val) > 0,
-      'Amount must be a positive number'
-    ),
-  description: z
-    .string()
-    .min(1, 'Description is required')
-    .min(5, 'Description must be at least 5 characters'),
+const editExpenseSchema = z.object({
+  name: z.string()
+    .min(1, "Name is required")
+    .min(3, "Name must be at least 3 characters"),
+  amount: z.string()
+    .min(1, "Amount is required")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Amount must be a positive number"),
+  description: z.string()
+    .min(1, "Description is required")
+    .min(5, "Description must be at least 5 characters"),
   category: z.enum(EXPENSE_CATEGORIES, {
-    errorMap: () => ({ message: 'Please select a valid category' }),
-  }),
+    errorMap: () => ({ message: "Please select a valid category" }),
+  })
 });
 
-type AddExpenseFormData = z.infer<typeof addExpenseSchema>;
+type EditExpenseFormData = z.infer<typeof editExpenseSchema>;
 
-export default function AddExpenseScreen() {
+export default function EditExpenseScreen() {
   const router = useRouter();
-  const { mutate: createExpense, isPending: isCreating } = useCreateExpense();
+  const { id } = useLocalSearchParams();
+  const { data: expenseResponse, isLoading: isLoadingExpense } = useGetExpense(id as string);
+  const { mutate: updateExpense, isPending: isUpdating } = useUpdateExpense();
 
   const {
     control,
     handleSubmit,
-    reset,
     formState: { errors, isValid },
-  } = useForm<AddExpenseFormData>({
-    resolver: zodResolver(addExpenseSchema),
-    mode: 'onChange',
-    defaultValues: {
-      name: '',
-      amount: '',
-      description: '',
-      category: 'Other',
-    },
+    reset
+  } = useForm<EditExpenseFormData>({
+    resolver: zodResolver(editExpenseSchema),
+    mode: "onChange",
   });
 
-  const onSubmit = (data: AddExpenseFormData) => {
-    createExpense(data, {
-      onSuccess: () => {
-        reset(); // Reset form to default values
-        router.back();
+  // Set form default values when expense data is loaded
+  React.useEffect(() => {
+    if (expenseResponse?.data) {
+      const expense = expenseResponse.data;
+      reset({
+        name: expense.name || '',
+        amount: expense.amount?.toString() || '',
+        description: expense.description || '',
+        category: (expense.category as typeof EXPENSE_CATEGORIES[number]) || 'Other',
+      });
+    }
+  }, [expenseResponse?.data, reset]);
+
+  const onSubmit = (data: EditExpenseFormData) => {
+    updateExpense(
+      { 
+        id: id as string,
+        ...data
       },
-      onError: () => {
-        Alert.alert('Error', 'Failed to create expense. Please try again.');
-      },
-    });
+      {
+        onSuccess: () => {
+          router.back();
+        },
+        onError: () => {
+          Alert.alert('Error', 'Failed to update expense. Please try again.');
+        },
+      }
+    );
   };
+
+  if (isLoadingExpense) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50">
+        <ActivityIndicator size="large" color="#667eea" />
+        <Text className="text-gray-600 mt-2">Loading expense...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -92,7 +99,7 @@ export default function AddExpenseScreen() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
-      <ScrollView
+      <ScrollView 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         keyboardShouldPersistTaps="handled"
         className="bg-gray-50"
@@ -110,7 +117,7 @@ export default function AddExpenseScreen() {
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-white">Add Expense</Text>
+            <Text className="text-xl font-bold text-white">Edit Expense</Text>
             <View className="w-10" />
           </View>
         </LinearGradient>
@@ -130,14 +137,12 @@ export default function AddExpenseScreen() {
                   placeholder="Enter name"
                   value={value}
                   onChangeText={onChange}
-                  editable={!isCreating}
+                  editable={!isUpdating}
                 />
               )}
             />
             {errors.name && (
-              <Text className="text-red-500 text-sm mt-1">
-                {errors.name.message}
-              </Text>
+              <Text className="text-red-500 text-sm mt-1">{errors.name.message}</Text>
             )}
           </View>
 
@@ -156,14 +161,12 @@ export default function AddExpenseScreen() {
                   value={value}
                   onChangeText={onChange}
                   keyboardType="decimal-pad"
-                  editable={!isCreating}
+                  editable={!isUpdating}
                 />
               )}
             />
             {errors.amount && (
-              <Text className="text-red-500 text-sm mt-1">
-                {errors.amount.message}
-              </Text>
+              <Text className="text-red-500 text-sm mt-1">{errors.amount.message}</Text>
             )}
           </View>
 
@@ -182,14 +185,12 @@ export default function AddExpenseScreen() {
                   value={value}
                   onChangeText={onChange}
                   multiline
-                  editable={!isCreating}
+                  editable={!isUpdating}
                 />
               )}
             />
             {errors.description && (
-              <Text className="text-red-500 text-sm mt-1">
-                {errors.description.message}
-              </Text>
+              <Text className="text-red-500 text-sm mt-1">{errors.description.message}</Text>
             )}
           </View>
 
@@ -210,20 +211,16 @@ export default function AddExpenseScreen() {
                       <TouchableOpacity
                         key={category}
                         onPress={() => onChange(category)}
-                        disabled={isCreating}
+                        disabled={isUpdating}
                         className={`mr-2 px-4 py-2 rounded-full ${
                           value === category
                             ? 'bg-blue-500'
                             : 'bg-gray-200'
                         }`}
                       >
-                        <Text
-                          className={`${
-                            value === category
-                              ? 'text-white'
-                              : 'text-gray-600'
-                          } font-medium`}
-                        >
+                        <Text className={`${
+                          value === category ? 'text-white' : 'text-gray-600'
+                        } font-medium`}>
                           {category}
                         </Text>
                       </TouchableOpacity>
@@ -233,9 +230,7 @@ export default function AddExpenseScreen() {
               />
             </ScrollView>
             {errors.category && (
-              <Text className="text-red-500 text-sm mt-1">
-                {errors.category.message}
-              </Text>
+              <Text className="text-red-500 text-sm mt-1">{errors.category.message}</Text>
             )}
           </View>
 
@@ -243,16 +238,16 @@ export default function AddExpenseScreen() {
           <View className="bg-white p-4 rounded-xl shadow-sm mb-8">
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
-              disabled={isCreating || !isValid}
+              disabled={isUpdating || !isValid}
               className={`bg-blue-500 p-4 rounded-xl items-center ${
-                (isCreating || !isValid) ? 'opacity-70' : ''
+                (isUpdating || !isValid) ? 'opacity-70' : ''
               }`}
             >
-              {isCreating ? (
+              {isUpdating ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <Text className="text-white font-semibold text-lg">
-                  Create Expense
+                  Update Expense
                 </Text>
               )}
             </TouchableOpacity>
